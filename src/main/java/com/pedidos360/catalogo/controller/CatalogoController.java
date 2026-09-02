@@ -8,13 +8,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/catalogo")
 public class CatalogoController {
 
+    private final com.pedidos360.catalogo.repository.ProductoRepository repository;
+
+    public CatalogoController(com.pedidos360.catalogo.repository.ProductoRepository repository) {
+        this.repository = repository;
+    }
+
     @GetMapping("/public")
-    public String publico() {
-        return "Catálogo Público: Puedes ver los productos sin autenticación.";
+    public java.util.List<com.pedidos360.catalogo.model.Producto> publico() {
+        return repository.findAll();
     }
 
     @GetMapping("/privado")
-    public String privado() {
-        return "Catálogo Privado: Estás viendo detalles confidenciales de los productos (Requiere Token).";
+    public java.util.List<com.pedidos360.catalogo.model.Producto> privado() {
+        return repository.findAll();
     }
 }
