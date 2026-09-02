@@ -1,0 +1,13 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: catalogo
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/
+          tenant-id: 8ea291c8-4670-4598-8f0f-b5e216b5b755
+          audience: c6445b4c-7863-42ac-a620-2fa3b5ea58d8
