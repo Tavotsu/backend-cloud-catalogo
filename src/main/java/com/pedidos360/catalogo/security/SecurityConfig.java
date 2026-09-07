@@ -38,8 +38,8 @@ public class SecurityConfig {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri + tenantId + "/v2.0");
-        OAuth2TokenValidator<Jwt> withAudience = new JwtClaimValidator<String>(
-                "aud", aud -> aud != null && aud.equals(audience));
+        OAuth2TokenValidator<Jwt> withAudience = new JwtClaimValidator<List<String>>(
+                "aud", aud -> aud != null && aud.contains(audience));
         
         // Azure v2 often puts the audience as a single string if it's the client ID, but spec says it can be list or string.
         // Spring Security converts it to List<String>.
