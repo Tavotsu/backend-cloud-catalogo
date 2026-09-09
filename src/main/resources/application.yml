@@ -20,3 +20,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://3.213.91.126}
