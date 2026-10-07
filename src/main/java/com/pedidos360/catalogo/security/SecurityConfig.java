@@ -1,7 +1,5 @@
 package com.pedidos360.catalogo.security;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,52 +7,37 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimValidator;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtValidators;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /**
-     * Origenes permitidos por CORS, separados por coma. Se sobrescribe por
-     * entorno con la variable CORS_ALLOWED_ORIGINS: el frontend no vive en la
-     * misma URL en local que desplegado.
-     */
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuerUri;
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.tenant-id}")
-    private String tenantId;
-
-    @Value("${spring.security.oauth2.resourceserver.jwt.audience}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
     private String audience;
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        String jwkSetUri = issuerUri + tenantId + "/discovery/v2.0/keys";
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-
-        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri + tenantId + "/v2.0");
+        // Aquí ocurre la magia del autodescubrimiento de Azure
+        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
+        
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
         OAuth2TokenValidator<Jwt> withAudience = new JwtClaimValidator<List<String>>(
                 "aud", aud -> aud != null && aud.contains(audience));
-        
-        // Azure v2 often puts the audience as a single string if it's the client ID, but spec says it can be list or string.
-        // Spring Security converts it to List<String>.
-        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience);
 
-        jwtDecoder.setJwtValidator(validator);
-
+        jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience));
         return jwtDecoder;
     }
 
@@ -72,13 +55,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/catalogo/public").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder())));
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests(authorize -> authorize
+                // Se mantiene tu regla: catálogo público abierto, el resto protegido
+                .requestMatchers("/api/v1/catalogo/public").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())));
         return http.build();
     }
 }

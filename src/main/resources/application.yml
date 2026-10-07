@@ -8,11 +8,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://login.microsoftonline.com/
-          tenant-id: 8ea291c8-4670-4598-8f0f-b5e216b5b755
-          audience: c6445b4c-7863-42ac-a620-2fa3b5ea58d8
-
+          # URL completa para que Spring descargue las llaves de Microsoft automáticamente
+          issuer-uri: https://login.microsoftonline.com/8ea291c8-4670-4598-8f0f-b5e216b5b755/v2.0
+          audiences: c6445b4c-7863-42ac-a620-2fa3b5ea58d8
   datasource:
+    # Variables dinámicas preparadas para Docker en AWS
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:catalogo_db}
     username: ${DB_USER:postgres}
     password: ${DB_PASS:postgres}
