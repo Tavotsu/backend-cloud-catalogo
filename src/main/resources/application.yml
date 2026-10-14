@@ -19,8 +19,33 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
+  rabbitmq:
+    addresses: ${RABBITMQ_ADDRESSES:localhost:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        default-requeue-rejected: false
+
+# Nombres de exchanges, colas y routing keys centralizados (ver RabbitMQProperties)
 app:
+  rabbitmq:
+    exchanges:
+      # Consume: orden creada
+      ordenes-topic: "ordenes.topic.exchange"
+      # Dead letter exchange propio de este microservicio
+      dlx: "catalogo.dlx.exchange"
+    queues:
+      stock: "catalogo.stock.queue"
+      stock-dlq: "catalogo.stock.dlq"
+    routing-keys:
+      # '#' acepta orden.creada y cualquier sub-clave (orden.creada.xxx)
+      orden-creada: "orden.creada.#"
+      stock-dlq: "catalogo.stock.dlq.key"
+
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://3.213.91.126}

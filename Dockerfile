@@ -9,4 +9,5 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# preferIPv4Stack evita el error "Network unreachable" al conectar con Azure
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
